@@ -1,7 +1,4 @@
-try:
-	from io import BytesIO
-except ImportError:
-	from cBytesIO import BytesIO
+from io import BytesIO
 from .serializers import *
 from .exceptions import NodeDisconnectException
 import os

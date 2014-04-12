@@ -1,9 +1,6 @@
 from .exceptions import NodeDisconnectException
 
-try:
-        from io import BytesIO
-except ImportError:
-        from cBytesIO import BytesIO
+from io import BytesIO
 import struct
 import time
 import random

@@ -2,10 +2,7 @@ import time
 import random
 import hashlib
 import struct
-try:
-	from io import BytesIO
-except ImportError:
-	from cBytesIO import BytesIO
+from io import BytesIO
 from collections import OrderedDict
 
 from . import fields
