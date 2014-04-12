@@ -1,4 +1,7 @@
-from cStringIO import StringIO
+try:
+	from io import StringIO
+except ImportError:
+	from cStringIO import StringIO
 from .serializers import *
 from .exceptions import NodeDisconnectException
 import os

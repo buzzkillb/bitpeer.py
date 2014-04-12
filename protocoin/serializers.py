@@ -2,7 +2,10 @@ import time
 import random
 import hashlib
 import struct
-from cStringIO import StringIO
+try:
+	from io import StringIO
+except ImportError:
+	from cStringIO import StringIO
 from collections import OrderedDict
 
 from . import fields

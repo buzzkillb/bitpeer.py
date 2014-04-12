@@ -1,6 +1,9 @@
 from .exceptions import NodeDisconnectException
 
-from cStringIO import StringIO
+try:
+	from io import StringIO
+except ImportError:
+	from cStringIO import StringIO
 import struct
 import time
 import random
