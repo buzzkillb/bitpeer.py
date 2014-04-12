@@ -1,7 +1,7 @@
 try:
-	from io import StringIO
+	from io import BytesIO
 except ImportError:
-	from cStringIO import StringIO
+	from cBytesIO import BytesIO
 from .serializers import *
 from .exceptions import NodeDisconnectException
 import os
@@ -18,7 +18,7 @@ class BitcoinBasicClient(object):
 
     def __init__(self, socket):
         self.socket = socket
-        self.buffer = StringIO()
+        self.buffer = BytesIO()
 
     def close_stream(self):
         """This method will close the socket stream."""
@@ -55,7 +55,7 @@ class BitcoinBasicClient(object):
             return
 
         # Go to the beginning of the buffer
-        self.buffer.reset()
+        self.buffer.seek(0)
 
         message_model = None
         message_header_serial = MessageHeaderSerializer()
@@ -69,7 +69,7 @@ class BitcoinBasicClient(object):
             return
 
         payload = self.buffer.read(message_header.length)
-        self.buffer = StringIO()
+        self.buffer = BytesIO()
         self.handle_message_header(message_header, payload)
 
         payload_checksum = \
@@ -81,7 +81,7 @@ class BitcoinBasicClient(object):
 
         if message_header.command in MESSAGE_MAPPING:
             deserializer = MESSAGE_MAPPING[message_header.command]()
-            message_model = deserializer.deserialize(StringIO(payload))
+            message_model = deserializer.deserialize(BytesIO(payload))
 
         return (message_header, message_model)
 
@@ -92,7 +92,7 @@ class BitcoinBasicClient(object):
 
         :param message: The message object to send
         """
-        bin_data = StringIO()
+        bin_data = BytesIO()
         message_header = MessageHeader(self.coin)
         message_header_serial = MessageHeaderSerializer()
 

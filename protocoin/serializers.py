@@ -3,9 +3,9 @@ import random
 import hashlib
 import struct
 try:
-	from io import StringIO
+	from io import BytesIO
 except ImportError:
-	from cStringIO import StringIO
+	from cBytesIO import BytesIO
 from collections import OrderedDict
 
 from . import fields
@@ -52,7 +52,7 @@ class Serializer(SerializerABC):
 
         :param obj: The object to serializer.
         """
-        bin_data = StringIO()
+        bin_data = BytesIO()
         for field_name, field_obj in self._fields.items():
             if fields:
                 if field_name not in fields:
@@ -67,7 +67,7 @@ class Serializer(SerializerABC):
         """This method will read the stream and then will deserialize the
         binary data information present on it.
 
-        :param stream: A file-like object (StringIO, file, socket, etc.)
+        :param stream: A file-like object (BytesIO, file, socket, etc.)
         """
         model = self.model_class()
         for field_name, field_obj in self._fields.items():
@@ -152,7 +152,7 @@ class IPv4AddressTimestamp(IPv4Address):
     """The IPv4 Address with timestamp."""
     def __init__(self):
         super(IPv4AddressTimestamp, self).__init__()
-        self.timestamp = time.time()
+        self.timestamp = int(time.time())
 
     def __repr__(self):
         services = self._services_to_text()
@@ -176,7 +176,7 @@ class Version(object):
     def __init__(self):
         self.version = fields.PROTOCOL_VERSION
         self.services = fields.SERVICES["NODE_NETWORK"]
-        self.timestamp = time.time()
+        self.timestamp = int(time.time())
         self.addr_recv = IPv4Address()
         self.addr_from = IPv4Address()
         self.nonce = random.randint(0, 2**32-1)
