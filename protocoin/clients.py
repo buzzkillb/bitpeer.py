@@ -66,7 +66,7 @@ class BitcoinBasicClient(object):
             return
 
         payload = self.buffer.read(message_header.length)
-        self.buffer = BytesIO()
+        self.buffer = BytesIO(self.buffer.read())
         self.handle_message_header(message_header, payload)
 
         payload_checksum = \
