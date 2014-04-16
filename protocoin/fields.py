@@ -222,7 +222,7 @@ class ListField(Field):
         count = self.var_int.deserialize(stream)
         items = []
         serializer = self.serializer_class()
-        for i in xrange(count):
+        for i in range(count):
             data = serializer.deserialize(stream)
             items.append(data)
         return items
