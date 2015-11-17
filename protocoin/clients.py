@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from io import BytesIO
 from .serializers import *
 from .exceptions import NodeDisconnectException, InvalidMessageChecksum
 import os
@@ -6,8 +6,9 @@ import os
 
 class ProtocolBuffer(object):
     def __init__(self):
-        self.buffer = StringIO()
+        self.buffer = BytesIO()
         self.header_size = MessageHeaderSerializer.calcsize()
+        #self.socket = socket
 
     def write(self, data):
         self.buffer.write(data)
@@ -26,7 +27,7 @@ class ProtocolBuffer(object):
             return (None, None)
 
         # Go to the beginning of the buffer
-        self.buffer.reset()
+        self.buffer.seek(0)
 
         message_model = None
         message_header_serial = MessageHeaderSerializer()
@@ -40,7 +41,7 @@ class ProtocolBuffer(object):
 
         payload = self.buffer.read(message_header.length)
         remaining = self.buffer.read()
-        self.buffer = StringIO()
+        self.buffer = BytesIO()
         self.buffer.write(remaining)
         payload_checksum = MessageHeaderSerializer.calc_checksum(payload)
 
@@ -51,7 +52,7 @@ class ProtocolBuffer(object):
 
         if message_header.command in MESSAGE_MAPPING:
             deserializer = MESSAGE_MAPPING[message_header.command]()
-            message_model = deserializer.deserialize(StringIO(payload))
+            message_model = deserializer.deserialize(BytesIO(payload))
 
         return (message_header, message_model)
 
@@ -97,7 +98,7 @@ class BitcoinBasicClient(object):
 
         :param message: The message object to send
         """
-        bin_data = StringIO()
+        bin_data = BytesIO()
         message_header = MessageHeader(self.coin)
         message_header_serial = MessageHeaderSerializer()
 
@@ -139,6 +140,7 @@ class BitcoinBasicClient(object):
             if handle_func:
                 handle_func(message_header, message)
 
+		
 class BitcoinClient(BitcoinBasicClient):
     """This class implements all the protocol rules needed
     for a client to stay up in the network. It will handle
