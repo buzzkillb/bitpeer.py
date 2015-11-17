@@ -436,7 +436,7 @@ class BlockHeader(object):
         bin_data = serializer.serialize(self, hash_fields)
         h = hashlib.sha256(bin_data).digest()
         h = hashlib.sha256(h).digest()
-        return h[::-1].encode("hex_codec")
+        return binascii.b2a_hex (h[::-1])
 
     def __repr__(self):
         return "<%s Version=[%d] Timestamp=[%s] Nonce=[%d] Hash=[%s] Tx Count=[%d]>" % \

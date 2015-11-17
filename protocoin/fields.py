@@ -327,7 +327,7 @@ class BlockLocator(Field):
         self.values = values
 
     def serialize(self):
-        bin_data = StringIO()
+        bin_data = BytesIO()
         for hash_ in self.values:
             for i in range(8):
                 pack_data = struct.pack(self.datatype, hash_ & 0xFFFFFFFF)
