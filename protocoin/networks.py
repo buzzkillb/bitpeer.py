@@ -1,3 +1,5 @@
+SUPPORTED_CHAINS = [ "BTC", "XTN", "NMC", "LTC", "XLT" ]
+
 MAGIC_VALUES = {
     "BTC": 0xD9B4BEF9,
     "XTN": 0x0709110B,
@@ -6,3 +8,10 @@ MAGIC_VALUES = {
     "XLT": 0xDCB7C1FC
 }
 
+
+def isSupported (chain):
+    return (chain.upper ()) in SUPPORTED_CHAINS)
+
+
+class UnsupportedChainException (Exception):
+    pass

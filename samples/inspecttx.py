@@ -1,7 +1,7 @@
 import socket
 from protocoin.clients import *
 
-class MyBitcoinClient(BitcoinClient):
+class MyChainClient(ChainClient):
     def handle_tx(self, message_header, message):
         print message
         for tx_out in message.tx_out:
@@ -17,7 +17,7 @@ def run_main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(("bitcoin.sipa.be", 8333))
     print ("Connected !")
-    client = MyBitcoinClient(sock)
+    client = MyChainClient(sock, 'BTC')
     client.handshake()
     client.loop()
 

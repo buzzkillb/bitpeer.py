@@ -64,10 +64,14 @@ class ChainBasicClient (object):
                    method.
     """
     def __init__(self, socket, chain = 'BTC'):
-	self.chain = chain
+	if not networks.isSupported (chian):
+	    raise networks.UnsupportedChainException ()
+	
+	self.chain = chain.upper ()
         self.socket = socket
         self.buffer = ProtocolBuffer()
 
+	
     def close_stream(self):
         """This method will close the socket stream."""
         self.socket.close()
