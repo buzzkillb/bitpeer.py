@@ -4,16 +4,16 @@ from .exceptions import NodeDisconnectException, InvalidMessageChecksum
 import os
 
 
-class ProtocolBuffer(object):
-    def __init__(self):
+class ProtocolBuffer (object):
+    def __init__ (self):
         self.buffer = BytesIO()
         self.header_size = MessageHeaderSerializer.calcsize()
         #self.socket = socket
 
-    def write(self, data):
+    def write (self, data):
         self.buffer.write(data)
 
-    def receive_message(self):
+    def receive_message (self):
         """This method will attempt to extract a header and message.
         It will return a tuple of (header, message) and set whichever
         can be set so far (None otherwise).
@@ -56,17 +56,15 @@ class ProtocolBuffer(object):
 
         return (message_header, message_model)
 
-class BitcoinBasicClient(object):
+class ChainBasicClient (object):
     """The base class for a Bitcoin network client, this class
     implements utility functions to create your own class.
 
     :param socket: a socket that supports the makefile()
                    method.
     """
-
-    coin = "bitcoin"
-
-    def __init__(self, socket):
+    def __init__(self, socket, chain = 'BTC'):
+	self.chain = chain
         self.socket = socket
         self.buffer = ProtocolBuffer()
 
@@ -99,7 +97,7 @@ class BitcoinBasicClient(object):
         :param message: The message object to send
         """
         bin_data = BytesIO()
-        message_header = MessageHeader(self.coin)
+        message_header = MessageHeader(self.chain)
         message_header_serial = MessageHeaderSerializer()
 
         serializer = MESSAGE_MAPPING[message.command]()
@@ -141,7 +139,7 @@ class BitcoinBasicClient(object):
                 handle_func(message_header, message)
 
 		
-class BitcoinClient(BitcoinBasicClient):
+class ChainClient(ChainBasicClient):
     """This class implements all the protocol rules needed
     for a client to stay up in the network. It will handle
     the handshake rules as well answer the ping messages."""

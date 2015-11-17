@@ -5,7 +5,7 @@ import struct
 from io import BytesIO
 from collections import OrderedDict
 
-from . import fields
+from . import fields, networks
 
 class SerializerMeta(type):
     """The serializer meta class. This class will create an attribute
@@ -74,15 +74,15 @@ class Serializer(SerializerABC):
 
 class MessageHeader(object):
     """The header of all bitcoin messages."""
-    def __init__(self, coin="bitcoin"):
-        self.magic = fields.MAGIC_VALUES[coin]
+    def __init__(self, chain="BTC"):
+        self.magic = networks.MAGIC_VALUES[chain]
         self.command = "None"
         self.length = 0
         self.checksum = 0
 
     def _magic_to_text(self):
         """Converts the magic value to a textual representation."""
-        for k, v in fields.MAGIC_VALUES.items():
+        for k, v in networks.MAGIC_VALUES.items():
             if v == self.magic:
                 return k
         return "Unknown Magic"
