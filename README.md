@@ -1,6 +1,6 @@
 # Protocoin - Bitcoin Protocol
 
-A pure Python bitcoin protocol implementation.
+A pure Python3 bitcoin protocol implementation.
 
 ## Documentation
 
