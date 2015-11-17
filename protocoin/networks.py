@@ -20,5 +20,5 @@ class UnsupportedChainException (Exception):
     pass
 
 def isSupported (chain):
-    return (chain.upper ()) in SUPPORTED_CHAINS)
+    return (chain.upper () in SUPPORTED_CHAINS)
 

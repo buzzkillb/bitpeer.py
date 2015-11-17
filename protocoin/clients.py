@@ -64,10 +64,10 @@ class ChainBasicClient (object):
                    method.
     """
     def __init__(self, socket, chain = 'BTC'):
-	if not networks.isSupported (chian):
-	    raise networks.UnsupportedChainException ()
+        if not networks.isSupported (chain):
+             raise networks.UnsupportedChainException ()
 	
-	self.chain = chain.upper ()
+        self.chain = chain.upper ()
         self.socket = socket
         self.buffer = ProtocolBuffer()
 

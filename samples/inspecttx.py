@@ -3,7 +3,7 @@ from protocoin.clients import *
 
 class MyChainClient(ChainClient):
     def handle_tx(self, message_header, message):
-        print message
+        print (message)
         for tx_out in message.tx_out:
             print ("BTC: %.8f" % tx_out.get_btc_value())
 
@@ -11,7 +11,7 @@ class MyChainClient(ChainClient):
         getdata = GetData()
         getdata_serial = GetDataSerializer()
         getdata.inventory = message.inventory
-        self.send_message(getdata, getdata_serial)
+        self.send_message(getdata)
 
 def run_main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

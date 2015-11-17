@@ -11,7 +11,7 @@ class MyChainClient(ChainClient):
         getdata = GetData()
         getdata_serial = GetDataSerializer()
         getdata.inventory = message.inventory
-        self.send_message(getdata, getdata_serial)
+        self.send_message(getdata)
 
     def handle_message_header(self, message_header, payload):
         print ("Received message:", message_header.command)

@@ -1,3 +1,4 @@
+import binascii
 import time
 import random
 import hashlib
@@ -401,8 +402,8 @@ class Tx(object):
         bin_data = serializer.serialize(self, hash_fields)
         h = hashlib.sha256(bin_data).digest()
         h = hashlib.sha256(h).digest()
-        return h[::-1].encode("hex_codec")
-
+        return binascii.b2a_hex (h[::-1])
+    
     def __repr__(self):
         return "<%s Version=[%d] Lock Time=[%s] TxIn Count=[%d] Hash=[%s] TxOut Count=[%d]>" \
             % (self.__class__.__name__, self.version, self._locktime_to_text(),
