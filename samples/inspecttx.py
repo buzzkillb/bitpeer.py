@@ -15,7 +15,7 @@ class MyChainClient(ChainClient):
 
 def run_main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(("bitcoin.sipa.be", 8333))
+    sock.connect(networks.peers['BTC'][0])
     print ("Connected !")
     client = MyChainClient(sock, 'BTC')
     client.handshake()

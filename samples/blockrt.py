@@ -1,5 +1,6 @@
 import socket
 from protocoin.clients import *
+import protocoin.networks
 
 class MyChainClient(ChainClient):
     def handle_block(self, message_header, message):
@@ -20,7 +21,7 @@ class MyChainClient(ChainClient):
 
 def run_main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(("bitcoin.sipa.be", 8333))
+    sock.connect(networks.peers['BTC'][0])
     client = MyChainClient(sock, 'BTC')
     client.handshake()
     client.loop()

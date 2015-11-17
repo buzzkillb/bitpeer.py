@@ -8,10 +8,17 @@ MAGIC_VALUES = {
     "XLT": 0xDCB7C1FC
 }
 
+peers = {
+    "BTC": [("bitcoin.sipa.be", 8333)],
+    "XTN": [],
+    "NMC": [],
+    "LTC": [],
+    "XLT": []
+}
+
+class UnsupportedChainException (Exception):
+    pass
 
 def isSupported (chain):
     return (chain.upper ()) in SUPPORTED_CHAINS)
 
-
-class UnsupportedChainException (Exception):
-    pass
