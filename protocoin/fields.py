@@ -1,6 +1,6 @@
 from .exceptions import NodeDisconnectException
 
-from cStringIO import StringIO
+from io import BytesIO
 import struct
 import time
 import random
@@ -157,12 +157,11 @@ class FixedStringField(Field):
 
     def deserialize(self, stream):
         data = stream.read(self.length)
-        return data.split("\x00", 1)[0]
+        return data[:(data+b'\x00').index(b'\x00')].decode("utf-8")
 
     def serialize(self):
-        bin_data = StringIO()
-        bin_data.write(self.value[:self.length])
-        bin_data.write("\x00" * (12 - len(self.value)))
+        bin_data = BytesIO()
+        bin_data.write(struct.pack("12s", self.value.encode("utf-8")))
         return bin_data.getvalue()
 
 class NestedField(Field):
@@ -211,7 +210,7 @@ class ListField(Field):
         self.value = value
 
     def serialize(self):
-        bin_data = StringIO()
+        bin_data = BytesIO()
         self.var_int.parse(len(self))
         bin_data.write(self.var_int.serialize())
         serializer = self.serializer_class()
@@ -223,7 +222,7 @@ class ListField(Field):
         count = self.var_int.deserialize(stream)
         items = []
         serializer = self.serializer_class()
-        for i in xrange(count):
+        for i in range(count):
             data = serializer.deserialize(stream)
             items.append(data)
         return items
@@ -236,7 +235,7 @@ class ListField(Field):
 
 class IPv4AddressField(Field):
     """An IPv4 address field without timestamp and reserved IPv6 space."""
-    reserved = "\x00"*10 + "\xff"*2
+    reserved = b"\x00"*10 + b"\xff"*2
 
     def parse(self, value):
         self.value = value
@@ -247,7 +246,7 @@ class IPv4AddressField(Field):
         return socket.inet_ntoa(addr)
 
     def serialize(self):
-        bin_data = StringIO()
+        bin_data = BytesIO()
         bin_data.write(self.reserved)
         bin_data.write(socket.inet_aton(self.value))
         return bin_data.getvalue()
@@ -273,12 +272,12 @@ class VariableIntegerField(Field):
 
     def serialize(self):
         if self.value < 0xFD:
-            return chr(self.value)
+            return struct.pack("B", self.value)
         if self.value <= 0xFFFF:
-            return chr(0xFD) + struct.pack("<H", self.value)
+            return b'\xFD' + struct.pack("<H", self.value)
         if self.value <= 0xFFFFFFFF:
-            return chr(0xFE) + struct.pack("<I", self.value)
-        return chr(0xFF) + struct.pack("<Q", self.value)
+            return b'\xFE' + struct.pack("<I", self.value)
+        return b'\xFF' + struct.pack("<Q", self.value)
 
 class VariableStringField(Field):
     """A variable length string field."""
@@ -297,9 +296,9 @@ class VariableStringField(Field):
 
     def serialize(self):
         self.var_int.parse(len(self))
-        bin_data = StringIO()
+        bin_data = BytesIO()
         bin_data.write(self.var_int.serialize())
-        bin_data.write(self.value)
+        bin_data.write(bytes(self.value, "utf-8"))
         return bin_data.getvalue()
 
     def __len__(self):
@@ -323,7 +322,7 @@ class Hash(Field):
 
     def serialize(self):
         hash_ = self.value
-        bin_data = StringIO()
+        bin_data = BytesIO()
         for i in range(8):
             pack_data = struct.pack(self.datatype, hash_ & 0xFFFFFFFF)
             bin_data.write(pack_data)
