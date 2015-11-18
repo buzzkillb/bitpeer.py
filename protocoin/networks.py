@@ -13,8 +13,9 @@ peers = {
     "XTN": [],
     "NMC": [],
     "LTC": [],
-    "XLT": []
+    "XLT": [("51.254.215.160", 18333)]
 }
+
 
 class UnsupportedChainException (Exception):
     pass

@@ -15,12 +15,20 @@ class MyChainClient(ChainClient):
 
 
 def run_main():
+    chain = 'BTC'
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(networks.peers['BTC'][0])
-    client = MyChainClient(sock, 'BTC')
+    sock.connect(networks.peers[chain][0])
+    client = MyChainClient(sock, chain)
     client.handshake()
 
-    getblock = GetBlocks ([0x00000000000000000fac2a67530fd5f6ba7c7b25f81578ddfaa405148509b7cb]) # specify last block hash
+    if chain == 'BTC':
+	lb = 0x00000000000000000fac2a67530fd5f6ba7c7b25f81578ddfaa405148509b7cb
+    elif chain == 'XLT':
+	lb = 0xd21fb875ca8244dcb6ae90b1e8e74f31fcc985a814450d188c59f6fff337c6df
+    else:
+	raise Exception ('This sample has test data only for BTC and XLT')
+	
+    getblock = GetBlocks ([lb]) # specify last block hash
     client.send_message (getblock)
     
     client.loop()

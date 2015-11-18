@@ -20,9 +20,10 @@ class MyChainClient(ChainClient):
         print ("Message sent:", message_header.command)
 
 def run_main():
+    chain = 'BTC'
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(networks.peers['BTC'][0])
-    client = MyChainClient(sock, 'BTC')
+    sock.connect(networks.peers[chain][0])
+    client = MyChainClient(sock, chain)
     client.handshake()
     client.loop()
 
