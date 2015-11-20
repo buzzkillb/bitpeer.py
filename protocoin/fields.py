@@ -1,3 +1,4 @@
+
 from .exceptions import NodeDisconnectException
 
 from io import BytesIO
@@ -7,7 +8,7 @@ import random
 import socket
 
 #: The protocol version
-PROTOCOL_VERSION = 60002
+PROTOCOL_VERSION = 70002
 
 #: The available services
 SERVICES = {
