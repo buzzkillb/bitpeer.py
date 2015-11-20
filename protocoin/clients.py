@@ -2,7 +2,7 @@ from io import BytesIO
 from .serializers import *
 from .exceptions import NodeDisconnectException, InvalidMessageChecksum
 import os
-
+import codecs
 
 class ProtocolBuffer (object):
     def __init__ (self):
@@ -40,6 +40,7 @@ class ProtocolBuffer (object):
             return (message_header, None)
 
         payload = self.buffer.read(message_header.length)
+        #print (codecs.encode (payload, 'hex'))
         remaining = self.buffer.read()
         self.buffer = BytesIO()
         self.buffer.write(remaining)
@@ -71,6 +72,8 @@ class ChainBasicClient (object):
         self.socket = socket
         self.buffer = ProtocolBuffer()
 
+    def update_socket (self, socket):
+        self.socket = socket
 	
     def close_stream(self):
         """This method will close the socket stream."""

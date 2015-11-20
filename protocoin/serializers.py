@@ -341,7 +341,7 @@ class TxIn(object):
     def __init__(self):
         self.previous_output = None
         self.signature_script = "Empty"
-        self.sequence = 0
+        self.sequence = 4294967295
 
     def __repr__(self):
         return "<%s Sequence=[%d]>" % \
@@ -353,7 +353,7 @@ class TxInSerializer(Serializer):
     previous_output = fields.NestedField(OutPointSerializer)
     signature_script = fields.VariableStringField()
     sequence = fields.UInt32LEField()
-
+    
 class TxOut(object):
     """The transaction output."""
     def __init__(self):
@@ -379,7 +379,7 @@ class Tx(object):
     command = "tx"
 
     def __init__(self):
-        self.version = 0
+        self.version = 1
         self.tx_in = []
         self.tx_out = []
         self.lock_time = 0
