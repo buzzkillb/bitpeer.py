@@ -30,7 +30,7 @@ class NodeClient (clients.ChainClient):
 		self.send_message(getdata)
 
 
-class ProtocoinNode:
+class Node:
 	def __init__ (self, chain, dbfile, lastblockhash = None, lastblockheight = None):
 		if not networks.isSupported (chain):
 			raise networks.UnsupportedChainException ()
