@@ -3,9 +3,10 @@ from bitpeer.node import *
 
 
 if __name__ == "__main__":
-    LASTBLOCK = '00000000005a060113161bd7a46d0812b72c5f5c0618777e70288c032a3b98c7'
-    LASTBLOCKINDEX = '606496'
-    node = Node ('XTN', './test.db', LASTBLOCK, LASTBLOCKINDEX)
+	LASTBLOCK = '000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943'
+	LASTBLOCKINDEX = 0
+	node = Node ('XTN', './test.db', LASTBLOCK, LASTBLOCKINDEX)
 
-    node.bootstrap ()
-    node.loop ()
+	node.bootstrap ()
+	node.connect ()
+	node.loop ()

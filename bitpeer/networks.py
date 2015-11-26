@@ -21,7 +21,7 @@ GENESIS = {
 
 PORTS = {
 	"BTC": 8333,
-    "XTN": 0,
+    "XTN": 18333,
     "NMC": 0,
     "LTC": 0,
     "XLT": 19333

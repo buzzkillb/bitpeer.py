@@ -1,7 +1,11 @@
+import binascii
 import shelve
 import socket
+import random
+from threading import Thread, Lock, Timer
 from . import clients
 from . import networks
+from . import serializers
 
 
 class SeedClient (clients.ChainClient):
@@ -19,13 +23,13 @@ class NodeClient (clients.ChainClient):
 		super (NodeClient, self).__init__ (socket, chain)
 
 	def handle_block(self, message_header, message):
-		print (message, message_header)
-		print ("Block hash:", message.calculate_hash())
+		#print (message, message_header)
+		#print ("Block hash:", message.calculate_hash())
 		self.node.handle_block (message_header, message)
 
 	def handle_inv(self, message_header, message):
-		getdata = GetData()
-		getdata_serial = GetDataSerializer()
+		getdata = clients.GetData()
+		getdata_serial = clients.GetDataSerializer()
 		getdata.inventory = message.inventory
 		self.send_message(getdata)
 
@@ -43,21 +47,41 @@ class Node:
 		self.threads = []
 		self.peers = []
 		self.blockFilter = lambda b: b
+		self.synctimer = None
+		self.postblocks = {}
+
 
 		# Set current block
 		if ('lastblockheight' in self.db) and (self.db ['lastblockheight'] > lastblockheight):
-			self.lastblockheight = self.db ['lastblockheight']
-			self.lastblockhash = self.db ['lastblockhash']
+			pass
 		elif lastblockheight != None and lastblockhash != None:
-			self.lastblockheight = lastblockheight
-			self.lastblockhash = lastblockhash
-			self.db ['lastblockheight'] = lastblockheight
+			self.db ['lastblockheight'] = int (lastblockheight)
 			self.db ['lastblockhash'] = lastblockhash
 		else:
-			self.lastblockheight = 0
-			self.lastblockhash = networks.GENESIS[chain]
 			self.db ['lastblockheight'] = 0
 			self.db ['lastblockhash'] = networks.GENESIS[chain]
+
+
+	# Contact the seed nodes for retrieving a peer list, also load a file peer list
+	def bootstrap (self):
+		for seed in networks.SEEDS [self.chain]:
+			try:
+				(hostname, aliaslist, ipaddrlist) = socket.gethostbyname_ex (seed)
+				for ip in ipaddrlist:
+					self.peers.append ((ip, networks.PORTS[self.chain]))
+
+			except Exception as e:
+				print (e)
+
+		#self.peers.append (('localhost', 18333))
+		#self.peers.append (('54.152.124.74', 18333))
+		#self.peers.append (('83.246.75.8', 18333))
+
+		if len (self.peers) == 0:
+			raise Exception ()
+
+		print ('Bootstrap done')
+
 
 	def connect (self):
 		for peer in self.peers:
@@ -65,14 +89,28 @@ class Node:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				sock.connect (peer)
 				pcc = NodeClient (sock, self.chain, self)
+				pcc.handshake ()
 				self.sockets.append (sock)
 				self.clients.append (pcc)
 			except:
 				pass
+
 		if len (self.clients) == 0:
 			raise Exception ()
-		#getblock = GetBlocks ([self.lastblockhash]) # specify last block hash
-		#self.clients[0].send_message (getblock)
+
+		self.synctimer = Timer (0.0, self.sync)
+		self.synctimer.start ()
+
+	def sync (self):
+		r = random.randint(0, len (self.clients) - 1)
+		p = self.clients [r]
+		print (self.peers[r])
+		getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
+		p.send_message (getblock)
+
+		self.synctimer.cancel ()
+		self.synctimer = Timer (0.5, self.sync)
+		self.synctimer.start ()
 
 
 	def loop (self):
@@ -92,48 +130,40 @@ class Node:
 
 	# TODO This is called by all clients when a new block should be handled; should be thread safe!
 	def handle_block (self, message_header, message):
+		#print (message_header, message)
 		b = self.blockFilter (message)
-		print (message_header, message)
+
+		#print (b.calculate_hash ())
+		if b.prev_block == int (self.db['lastblockhash'], 16):
+			# Serialize block
+			deserializer = serializers.BlockSerializer ()
+			bb = deserializer.serialize (b)
+
+			hash = str (b.calculate_hash ())[2:-1]
+			self.db[str (int (self.db['lastblockheight']) + 1)] = hash
+			self.db[hash] = bb
+			self.db['lastblockheight'] += 1
+			self.db['lastblockhash'] = hash
+			print (self.db['lastblockheight'], self.db['lastblockhash'])
+
+			if hash in self.postblocks:
+				self.handle_block (None, self.prevblocks[hash])
+				print ('PREVBLOCK found')
+				del self.postblocks[hash]
+
+			self.db.sync ()
+
+			self.synctimer.cancel ()
+			self.synctimer = Timer (0.5, self.sync)
+			self.synctimer.start ()
+		else:
+			hash = str (hex (b.prev_block))[2:]
+			hash = '0' * (64 - len (hash)) + hash
+			if not hash in self.db:
+				print ('prev', hash)
+				self.postblocks [hash] = b
 
 
-	# TODO This is called by all seeds clients when a new list should be handled; should be thread safe!
-	def handle_addr (self, message_header, message):
-		print (message_header, message)
-
-		for peer in message.addresses:
-			print (peer)
-
-
-	# Contact the seed nodes for retrieving a peer list, also load a file peer list
-	def bootstrap (self):
-		st = []
-
-		for seed in networks.SEEDS [self.chain]:
-			try:
-				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				sock.connect ((seed, networks.PORTS [self.chain]))
-				pcc = SeedClient (sock, self.chain, self)
-
-				getaddr = GetAddr ()
-				pcc.send_message (getblock)
-				t = Thread (target=pcc.loop, args=())
-				t.start ()
-				st.append ([t, pcc])
-			except:
-				pass
-
-		if len (st) == 0:
-			raise Exception ()
-
-		while len (self.peers) < 10:
-			time.sleep (10)
-			print ('Waiting for seeds', len (self.peers))
-
-		for s in st:
-			s[1].stop ()
-			s[0].join ()
-
-		print ('Bootstrap done')
 
 	def getLastBlockHeight (self):
 		return self.db['lastblockheight']
@@ -142,7 +172,12 @@ class Node:
 		return self.db['bi'+str(index)]
 
 	def getBlockByHash (self, bhash):
-		return self.db[str(bhash)]
+		if bhash in self.db:
+			deserializer = serializers.BlockSerializer ()
+			b = deserializer.deserialize(BytesIO (self.db[bhash]))
+			return b
+		else:
+			return None
 
 	def broadcastTransaction (self, transaction):
 		return None

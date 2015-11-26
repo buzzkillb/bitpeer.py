@@ -178,7 +178,7 @@ class Version(object):
         self.addr_recv = IPv4Address()
         self.addr_from = IPv4Address()
         self.nonce = random.randint(0, 2**32-1)
-        self.user_agent = "/Perone:0.0.1/"
+        self.user_agent = "/bitpeer.py:0.10.2/"
         self.start_height = 0
 
 class VersionSerializer(Serializer):
