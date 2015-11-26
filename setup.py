@@ -1,19 +1,19 @@
 from setuptools import setup
-import protocoin
+import bitpeer
 
 
 setup(
-    name='protocoin',
-    version='0.3',
-    url='https://github.com/dakk/protocoin',
+    name='bitpeer.py',
+    version='0.4',
+    url='https://github.com/dakk/bitpeer.py',
     license='BSD License',
     author='Davide Gessa, Christian S. Perone',
     author_email='gessadavide@gmail.com, christian.perone@gmail.com',
     description='A pure Python3 bitcoin protocol implementation.',
     long_description='A pure Python3 bitcoin protocol implementation.',
     install_requires=['ecdsa>=0.10'],
-    packages=['protocoin'],
-    keywords='bitcoin, protocol, blockchain, litecoin, testnet',
+    packages=['bitpeer'],
+    keywords='bitcoin, protocol, blockchain, litecoin, testnet, bitpeer, peer',
     platforms='Any',
     zip_safe=True,
     classifiers=[

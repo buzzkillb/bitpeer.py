@@ -1,6 +1,6 @@
 import socket
-from protocoin.clients import *
-import protocoin.networks
+from bitpeer.clients import *
+import bitpeer.networks
 
 class MyChainClient(ChainClient):
     def handle_block(self, message_header, message):
@@ -22,7 +22,7 @@ class MyChainClient(ChainClient):
 def run_main():
     chain = 'BTC'
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(networks.peers[chain][0])
+    sock.connect(networks.PEERS[chain][0])
     client = MyChainClient(sock, chain)
     client.handshake()
     client.loop()

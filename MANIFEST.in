@@ -1,5 +1,5 @@
 include LICENSE
 
-recursive-exclude protocoin *.pyc
-recursive-exclude protocoin *.pyo
+recursive-exclude bitpeer *.pyc
+recursive-exclude bitpeer *.pyo
 recursive-exclude docs *

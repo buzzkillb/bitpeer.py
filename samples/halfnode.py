@@ -1,5 +1,5 @@
 import socket
-from protocoin.node import *
+from bitpeer.node import *
 
 
 if __name__ == "__main__":
