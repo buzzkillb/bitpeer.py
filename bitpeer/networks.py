@@ -12,8 +12,8 @@ MAGIC_VALUES = {
 
 
 GENESIS = {
-	"BTC": '',
-    "XTN": '',
+	"BTC": 0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f,
+    "XTN": 0x000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943,
     "NMC": '',
     "LTC": '',
     "XLT": ''
