@@ -10,7 +10,7 @@ from . import fields, networks
 
 class SerializerMeta(type):
     """The serializer meta class. This class will create an attribute
-    called '_fields' in each serializer with the ordered dict of 
+    called '_fields' in each serializer with the ordered dict of
     fields present on the subclasses.
     """
     def __new__(meta, name, bases, attrs):
@@ -131,7 +131,7 @@ class IPv4Address(object):
             if self.services & flag_mask:
                 services.append(service_name)
         return services
-        
+
     def __repr__(self):
         services = self._services_to_text()
         if not services:
@@ -353,7 +353,7 @@ class TxInSerializer(Serializer):
     previous_output = fields.NestedField(OutPointSerializer)
     signature_script = fields.VariableStringField()
     sequence = fields.UInt32LEField()
-    
+
 class TxOut(object):
     """The transaction output."""
     def __init__(self):
@@ -403,7 +403,7 @@ class Tx(object):
         h = hashlib.sha256(bin_data).digest()
         h = hashlib.sha256(h).digest()
         return binascii.b2a_hex (h[::-1])
-    
+
     def __repr__(self):
         return "<%s Version=[%d] Lock Time=[%s] TxIn Count=[%d] Hash=[%s] TxOut Count=[%d]>" \
             % (self.__class__.__name__, self.version, self._locktime_to_text(),

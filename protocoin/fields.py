@@ -24,7 +24,7 @@ INVENTORY_TYPE = {
 
 class Field(object):
     """Base class for the Fields. This class only implements
-    the counter to keep the order of the fields on the 
+    the counter to keep the order of the fields on the
     serializer classes."""
     counter = 0
 
@@ -58,7 +58,7 @@ class Field(object):
         raise NotImplemented
 
     def __repr__(self):
-        return "<%s [%r]>" % (self.__class__.__name__, 
+        return "<%s [%r]>" % (self.__class__.__name__,
             repr(self.value))
 
     def __str__(self):
@@ -66,7 +66,7 @@ class Field(object):
 
 class PrimaryField(Field):
     """This is a base class for all fields that has only
-    one value and their value can be represented by 
+    one value and their value can be represented by
     a Python struct datatype.
 
     Example of use::
@@ -97,7 +97,7 @@ class PrimaryField(Field):
         """Serialize the internal data and then return the
         serialized data."""
         data = struct.pack(self.datatype, self.value)
-        return data       
+        return data
 
 class Int32LEField(PrimaryField):
     """32-bit little-endian integer field."""
@@ -159,7 +159,7 @@ class NestedField(Field):
     """A field used to nest another serializer.
 
     Example of use::
-       
+
        class TxInSerializer(Serializer):
            model_class = TxIn
            previous_output = fields.NestedField(OutPointSerializer)
@@ -179,6 +179,52 @@ class NestedField(Field):
 
     def serialize(self):
         return self.serializer.serialize(self.value)
+
+class ListField(Field):
+    """A field used to serialize/deserialize a list of serializers.
+
+    Example of use::
+
+        class TxSerializer(Serializer):
+            model_class = Tx
+            version = fields.UInt32LEField()
+            tx_in = fields.ListField(TxInSerializer)
+            tx_out = fields.ListField(TxOutSerializer)
+            lock_time = fields.UInt32LEField()
+    """
+    def __init__(self, serializer_class):
+        super(ListField, self).__init__()
+        self.serializer_class = serializer_class
+        self.var_int = VariableIntegerField()
+
+    def parse(self, value):
+        self.value = value
+
+    def serialize(self):
+        bin_data = BytesIO()
+        self.var_int.parse(len(self))
+        bin_data.write(self.var_int.serialize())
+        serializer = self.serializer_class()
+        for item in self:
+            bin_data.write(serializer.serialize(item))
+        return bin_data.getvalue()
+
+    def deserialize(self, stream):
+        count = self.var_int.deserialize(stream)
+        items = []
+        serializer = self.serializer_class()
+        for i in range(count):
+            data = serializer.deserialize(stream)
+            items.append(data)
+        return items
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def __len__(self):
+        return len(self.value)
+
+
 
 class ListField(Field):
     """A field used to serialize/deserialize a list of serializers.
