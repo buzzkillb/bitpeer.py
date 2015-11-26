@@ -11,6 +11,14 @@ MAGIC_VALUES = {
 }
 
 
+GENESIS = {
+	"BTC": '',
+    "XTN": '',
+    "NMC": '',
+    "LTC": '',
+    "XLT": ''
+}
+
 PORTS = {
 	"BTC": 8333,
     "XTN": 0,

@@ -44,14 +44,20 @@ class Node:
 		self.peers = []
 		self.blockFilter = lambda b: b
 
+		# Set current block
 		if ('lastblockheight' in self.db) and (self.db ['lastblockheight'] > lastblockheight):
 			self.lastblockheight = self.db ['lastblockheight']
 			self.lastblockhash = self.db ['lastblockhash']
-		else:
+		elif lastblockheight != None and lastblockhash != None:
 			self.lastblockheight = lastblockheight
 			self.lastblockhash = lastblockhash
 			self.db ['lastblockheight'] = lastblockheight
 			self.db ['lastblockhash'] = lastblockhash
+		else:
+			self.lastblockheight = 0
+			self.lastblockhash = networks.GENESIS[chain]
+			self.db ['lastblockheight'] = 0
+			self.db ['lastblockhash'] = networks.GENESIS[chain]
 
 	def connect (self):
 		for peer in self.peers:
