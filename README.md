@@ -1,6 +1,6 @@
-# bitpeer.py - Bitcoin Protocol
+# bitpeer.py - Bitcoin protocol
 
-A pure Python3 bitcoin protocol implementation. 
+A pure Python3 bitcoin protocol implementation.
 
 This library is a fork of the existing software https://github.com/perone/protocoin.
 
@@ -8,7 +8,7 @@ This library is a fork of the existing software https://github.com/perone/protoc
 ## Features
 
 - Bitcoin protocol data serialization / deserialization
-- Customizable clients (single node connection) and nodes (multiple node connections)
+- Customizable clients (single node connection) and nodes (multiple node connections with storage and mempool)
 - Network support for different coins (bitcoin, namecoin, litecoin)
 
 

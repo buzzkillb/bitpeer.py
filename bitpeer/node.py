@@ -2,20 +2,12 @@ import binascii
 import shelve
 import socket
 import random
+from pycoin.tx import Tx #remove this
 from io import BytesIO
 from threading import Thread, Lock, Timer
 from . import clients
 from . import networks
 from . import serializers
-
-
-class SeedClient (clients.ChainClient):
-	def __init__ (self, socket, chain, node):
-		self.node = node
-		super (SeedClient, self).__init__ (socket, chain)
-
-	def handle_addr (self, message_header, message):
-		self.node.handle_addr (message_header, message)
 
 
 class NodeClient (clients.ChainClient):
@@ -24,8 +16,6 @@ class NodeClient (clients.ChainClient):
 		super (NodeClient, self).__init__ (socket, chain)
 
 	def handle_block(self, message_header, message):
-		#print (message, message_header)
-		#print ("Block hash:", message.calculate_hash())
 		self.node.handle_block (message_header, message)
 
 	def handle_inv(self, message_header, message):
@@ -34,12 +24,26 @@ class NodeClient (clients.ChainClient):
 		getdata.inventory = message.inventory
 		self.send_message(getdata)
 
+	def handle_mempool (self, message_header, message):
+		print (message)
+		self.node.handle_mempool (self, message_header, message)
 
+	def handle_getdata (self, message_header, message):
+		self.node.handle_getdata (self, message_header, message)
+
+
+# Todo remove transaction from mempool after confirmation
 class Node:
-	def __init__ (self, chain, dbfile, lastblockhash = None, lastblockheight = None):
+	def __init__ (self, chain, dbfile, lastblockhash = None, lastblockheight = None, logger=None, maxpeers=15):
 		if not networks.isSupported (chain):
 			raise networks.UnsupportedChainException ()
 
+		if logger == None:
+			self.logger = lambda x: x
+		else:
+			self.logger = logger
+
+		self.maxpeers = maxpeers
 		self.chain = chain
 		self.dbfile = dbfile
 		self.db = shelve.open (dbfile)
@@ -49,8 +53,12 @@ class Node:
 		self.peers = []
 		self.blockFilter = lambda b: b
 		self.synctimer = None
+		self.mempooltimer = None
 		self.postblocks = {}
 
+		# Create mempool
+		#if not 'mempool' in self.db:
+		self.db['mempool'] = {}
 
 		# Set current block
 		if ('lastblockheight' in self.db) and (self.db ['lastblockheight'] > lastblockheight):
@@ -78,9 +86,8 @@ class Node:
 			raise Exception ()
 
 		random.shuffle (self.peers)
-		self.peers = self.peers [0:10]
-
-		print ('Bootstrap done')
+		self.peers = self.peers [0:self.maxpeers]
+		self.logger.debug ('Bootstrap done')
 
 
 	def connect (self):
@@ -107,7 +114,7 @@ class Node:
 	def sync (self):
 		if len (self.clients) == 0:
 			return
-			
+
 		r = random.randint(0, len (self.clients) - 1)
 		p = self.clients [r]
 		try:
@@ -117,7 +124,7 @@ class Node:
 			self.clients.remove (p)
 
 		self.synctimer.cancel ()
-		self.synctimer = Timer (0.5, self.sync)
+		self.synctimer = Timer (0.1, self.sync)
 		self.synctimer.start ()
 
 
@@ -128,6 +135,9 @@ class Node:
 			self.clients.remove (cl)
 
 	def loop (self):
+		self.mempooltimer = Timer (1.0, self.announceTransactions)
+		self.mempooltimer.start ()
+
 		# Start the loop in each client as a new thread
 		for cl in self.clients:
 			t = Thread (target=self.innerLoop, args=(cl,))
@@ -142,32 +152,86 @@ class Node:
 			t.join ()
 
 
+	def announceTransactions (self, txid = None):
+		if txid != None or len (self.db['mempool']) != 0:
+			inv = clients.InventoryVector()
+			inv_serial = clients.InventoryVectorSerializer()
+
+			if txid != None:
+				sinv = clients.Inventory ()
+				sinv.inv_hash = int (txid, 16)
+				inv.inventory = [ sinv ]
+			else:
+				inv.inventory = []
+				for txid in self.db['mempool']:
+					sinv = clients.Inventory ()
+					sinv.inv_hash = int (txid, 16)
+
+					inv.inventory.append (sinv)
+
+			#self.logger.debug ('Announcing %d transactions', len (inv.inventory))
+			for cl in self.clients:
+				try:
+					cl.send_message (inv)
+				except:
+					pass
+
+		self.mempooltimer.cancel ()
+		self.mempooltimer = Timer (2.0, self.announceTransactions)
+		self.mempooltimer.start ()
+
+
+	def handle_mempool (self, client, message_header, message):
+		pass
+
+	def handle_getdata (self, client, message_header, message):
+		#print ('getdata')
+		for inv in message.inventory:
+			txhash = str (hex (inv.inv_hash))[2:]
+			#print ('asking for', txhash)
+			if txhash in self.db['mempool']:
+				#print ('sending mempool transaction ', txhash)
+				tx = self.db['mempool'][txhash]
+				try:
+					print ('\t', str (tx.calculate_hash ())[2:-1])
+					client.send_message (tx)
+				except Exception as e:
+					print (e)
+		#print (self.db['mempool'])
+
 	def handle_block (self, message_header, message):
 		#print (message_header, message)
-		b = self.blockFilter (message)
 
-		#print (b.calculate_hash ())
-		if b.prev_block == int (self.db['lastblockhash'], 16):
+		#print (message.calculate_hash ())
+		#print (self.db['lastblockhash'])
+		#print (message.prev_block, int (self.db['lastblockhash'], 16))
+
+		if message.prev_block == int (self.db['lastblockhash'], 16):
+			try:
+				b = self.blockFilter (message)
+			except Exception as e:
+				print (e)
+
 			# Serialize block
 			deserializer = serializers.BlockSerializer ()
 			bb = deserializer.serialize (b)
 
-			hash = str (b.calculate_hash ())[2:-1]
+			hash = str (message.calculate_hash ())[2:-1]
 			self.db[str (int (self.db['lastblockheight']) + 1)] = hash
 			self.db[hash] = bb
 			self.db['lastblockheight'] += 1
 			self.db['lastblockhash'] = hash
-			print (self.db['lastblockheight'], self.db['lastblockhash'])
+			self.logger.debug ('%d %s', self.db['lastblockheight'], self.db['lastblockhash'])
 
 			if hash in self.postblocks:
 				self.handle_block (None, self.prevblocks[hash])
-				print ('PREVBLOCK found')
+				#self.logger.debug ('PREVBLOCK found')
 				del self.postblocks[hash]
 
 			self.db.sync ()
 
 			self.synctimer.cancel ()
-			self.synctimer = Timer (0.5, self.sync)
+			self.synctimer = Timer (0.1, self.sync)
 			self.synctimer.start ()
 		else:
 			hash = str (hex (b.prev_block))[2:]
@@ -188,11 +252,32 @@ class Node:
 
 	def getBlockByHash (self, bhash):
 		if bhash in self.db:
-			#deserializer = serializers.BlockSerializer ()
-			#b = deserializer.deserialize(BytesIO (self.db[bhash]))
 			return self.db[bhash]
 		else:
 			return None
 
 	def broadcastTransaction (self, transaction):
-		return None
+		print (transaction)
+		t = Tx.tx_from_hex (transaction)
+
+		deserializer = serializers.TxSerializer ()
+		tx = deserializer.deserialize (BytesIO (bytearray.fromhex(transaction)))
+		h = t.id ()
+		print ('BROADCAST:', str (tx.calculate_hash ())[2:-1], h)
+
+		#try:
+		#	t = Tx.tx_from_hex (transaction)
+		#	print ('OMG',t.id ())
+		#except Exception as e:
+		#	print (e)
+
+		if not h in self.db['mempool']:
+			mp = self.db['mempool']
+			mp[h] = tx
+			self.db['mempool'] = mp
+			self.db.sync ()
+
+		self.mempooltimer = Timer (1.0, self.announceTransactions)
+		self.mempooltimer.start ()
+
+		return h

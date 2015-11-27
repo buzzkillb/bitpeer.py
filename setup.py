@@ -11,7 +11,7 @@ setup(
     author_email='gessadavide@gmail.com, christian.perone@gmail.com',
     description='A pure Python3 bitcoin protocol implementation.',
     long_description='A pure Python3 bitcoin protocol implementation.',
-    install_requires=['ecdsa>=0.10'],
+    install_requires=['ecdsa>=0.10', 'pycoin'],
     packages=['bitpeer'],
     keywords='bitcoin, protocol, blockchain, litecoin, testnet, bitpeer, peer',
     platforms='Any',

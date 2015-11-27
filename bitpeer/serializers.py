@@ -412,10 +412,10 @@ class Tx(object):
 class TxSerializer(Serializer):
     """The transaction serializer."""
     model_class = Tx
-    version = fields.UInt32LEField()
-    tx_in = fields.ListField(TxInSerializer)
-    tx_out = fields.ListField(TxOutSerializer)
-    lock_time = fields.UInt32LEField()
+    version = fields.UInt32LEField ()
+    tx_in = fields.ListField (TxInSerializer)
+    tx_out = fields.ListField (TxOutSerializer)
+    lock_time = fields.UInt32LEField ()
 
 class BlockHeader(object):
     """The header of the block."""
