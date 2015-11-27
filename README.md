@@ -6,8 +6,14 @@ A pure Python3 bitcoin protocol implementation with pycoin.
 ## Features
 
 - Bitcoin protocol data serialization / deserialization
-- Customizable clients (single node connection) and nodes (multiple node connections with storage and mempool)
+- Customizable clients for single node connections
 - Network support for different coins (bitcoin, namecoin, litecoin)
+- Customizable node:
+  - DNS seed bootstrap
+  - Multiple connections
+  - Mempool and transaction broadcast
+  - Automatic syncronization with fs storage capabilities
+
 
 
 ## Getting started
