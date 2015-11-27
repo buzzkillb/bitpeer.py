@@ -25,7 +25,6 @@ class NodeClient (clients.ChainClient):
 		self.send_message(getdata)
 
 	def handle_mempool (self, message_header, message):
-		print (message)
 		self.node.handle_mempool (self, message_header, message)
 
 	def handle_getdata (self, message_header, message):
@@ -191,34 +190,25 @@ class Node:
 			#print ('asking for', txhash)
 			if txhash in self.db['mempool']:
 				#print ('sending mempool transaction ', txhash)
-				tx = self.db['mempool'][txhash]
+				tx = self.db['mempool'][txhash].tx_as_hex ()
+
 				try:
-					print ('\t', str (tx.calculate_hash ())[2:-1])
 					client.send_message (tx)
 				except Exception as e:
 					print (e)
 		#print (self.db['mempool'])
 
 	def handle_block (self, message_header, message):
-		#print (message_header, message)
-
-		#print (message.calculate_hash ())
-		#print (self.db['lastblockhash'])
-		#print (message.prev_block, int (self.db['lastblockhash'], 16))
-
-		if message.prev_block == int (self.db['lastblockhash'], 16):
+		if message.previous_block_id () == self.db['lastblockhash']:
 			try:
 				b = self.blockFilter (message)
 			except Exception as e:
 				print (e)
 
 			# Serialize block
-			deserializer = serializers.BlockSerializer ()
-			bb = deserializer.serialize (b)
-
-			hash = str (message.calculate_hash ())[2:-1]
+			hash = message.id ()
 			self.db[str (int (self.db['lastblockheight']) + 1)] = hash
-			self.db[hash] = bb
+			self.db[hash] = b
 			self.db['lastblockheight'] += 1
 			self.db['lastblockhash'] = hash
 			self.logger.debug ('%d %s', self.db['lastblockheight'], self.db['lastblockhash'])
@@ -234,11 +224,10 @@ class Node:
 			self.synctimer = Timer (0.1, self.sync)
 			self.synctimer.start ()
 		else:
-			hash = str (hex (b.prev_block))[2:]
-			hash = '0' * (64 - len (hash)) + hash
+			hash = message.previous_block_id ()
 			if not hash in self.db:
 				#print ('prev', hash)
-				self.postblocks [hash] = b
+				self.postblocks [hash] = message
 
 
 	def getLastBlockHeight (self):

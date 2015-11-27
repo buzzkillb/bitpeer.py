@@ -1,5 +1,6 @@
 from io import BytesIO
 from .serializers import *
+from pycoin.block import Block
 from .exceptions import NodeDisconnectException, InvalidMessageChecksum
 import os
 import codecs
@@ -52,8 +53,13 @@ class ProtocolBuffer (object):
 			raise InvalidMessageChecksum(msg)
 
 		if message_header.command in MESSAGE_MAPPING:
-			deserializer = MESSAGE_MAPPING[message_header.command]()
-			message_model = deserializer.deserialize(BytesIO(payload))
+			#print (message_header.command)
+			if message_header.command == 'block':
+				message_model = Block.parse(BytesIO(payload))
+				#print (message_model.id ())
+			else:
+				deserializer = MESSAGE_MAPPING[message_header.command]()
+				message_model = deserializer.deserialize(BytesIO(payload))
 
 		return (message_header, message_model)
 
