@@ -2,6 +2,7 @@ import binascii
 import shelve
 import socket
 import random
+from io import BytesIO
 from threading import Thread, Lock, Timer
 from . import clients
 from . import networks
@@ -71,14 +72,13 @@ class Node:
 					self.peers.append ((ip, networks.PORTS[self.chain]))
 
 			except Exception as e:
-				print (e)
-
-		#self.peers.append (('localhost', 18333))
-		#self.peers.append (('54.152.124.74', 18333))
-		#self.peers.append (('83.246.75.8', 18333))
+				pass
 
 		if len (self.peers) == 0:
 			raise Exception ()
+
+		random.shuffle (self.peers)
+		self.peers = self.peers [0:10]
 
 		print ('Bootstrap done')
 
@@ -87,7 +87,9 @@ class Node:
 		for peer in self.peers:
 			try:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				sock.settimeout (3.0)
 				sock.connect (peer)
+				sock.settimeout (None)
 				pcc = NodeClient (sock, self.chain, self)
 				pcc.handshake ()
 				self.sockets.append (sock)
@@ -101,22 +103,34 @@ class Node:
 		self.synctimer = Timer (0.0, self.sync)
 		self.synctimer.start ()
 
+
 	def sync (self):
+		if len (self.clients) == 0:
+			return
+			
 		r = random.randint(0, len (self.clients) - 1)
 		p = self.clients [r]
-		print (self.peers[r])
-		getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
-		p.send_message (getblock)
+		try:
+			getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
+			p.send_message (getblock)
+		except:
+			self.clients.remove (p)
 
 		self.synctimer.cancel ()
 		self.synctimer = Timer (0.5, self.sync)
 		self.synctimer.start ()
 
 
+	def innerLoop (self, cl):
+		try:
+			cl.loop ()
+		except:
+			self.clients.remove (cl)
+
 	def loop (self):
 		# Start the loop in each client as a new thread
 		for cl in self.clients:
-			t = Thread (target=cl.loop, args=())
+			t = Thread (target=self.innerLoop, args=(cl,))
 			t.start ()
 			self.threads.append (t)
 
@@ -128,7 +142,6 @@ class Node:
 			t.join ()
 
 
-	# TODO This is called by all clients when a new block should be handled; should be thread safe!
 	def handle_block (self, message_header, message):
 		#print (message_header, message)
 		b = self.blockFilter (message)
@@ -160,22 +173,24 @@ class Node:
 			hash = str (hex (b.prev_block))[2:]
 			hash = '0' * (64 - len (hash)) + hash
 			if not hash in self.db:
-				print ('prev', hash)
+				#print ('prev', hash)
 				self.postblocks [hash] = b
-
 
 
 	def getLastBlockHeight (self):
 		return self.db['lastblockheight']
 
 	def getBlockHash (self, index):
-		return self.db['bi'+str(index)]
+		if str(index) in self.db:
+			return self.db[str(index)]
+		else:
+			return None
 
 	def getBlockByHash (self, bhash):
 		if bhash in self.db:
-			deserializer = serializers.BlockSerializer ()
-			b = deserializer.deserialize(BytesIO (self.db[bhash]))
-			return b
+			#deserializer = serializers.BlockSerializer ()
+			#b = deserializer.deserialize(BytesIO (self.db[bhash]))
+			return self.db[bhash]
 		else:
 			return None
 
