@@ -4,8 +4,8 @@ from bitpeer.clients import *
 class MyChainClient(ChainClient):
     def handle_tx(self, message_header, message):
         print (message)
-        for tx_out in message.tx_out:
-            print ("BTC: %.8f" % tx_out.get_btc_value())
+        #for tx_out in message.tx_out:
+         #   print ("BTC: %.8f" % tx_out.get_btc_value())
 	    
     def handle_inv(self, message_header, message):
         getdata = GetData()

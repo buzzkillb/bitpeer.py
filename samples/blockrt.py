@@ -5,7 +5,7 @@ import bitpeer.networks
 class MyChainClient(ChainClient):
     def handle_block(self, message_header, message):
         print (message)
-        print ("Block hash:", message.calculate_hash())
+        print ("Block hash:", message.id ())
 
     def handle_inv(self, message_header, message):
         getdata = GetData()

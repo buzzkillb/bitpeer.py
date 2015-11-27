@@ -6,7 +6,7 @@ import bitpeer.networks
 class MyChainClient(ChainClient):
     def handle_block(self, message_header, message):
         print (message, message_header)
-        print ("Block hash:", message.calculate_hash())
+        print ("Block hash:", message.id ())
 
         for tx in message.txns[1:2]:
              #print ('\t',tx.calculate_hash ())
