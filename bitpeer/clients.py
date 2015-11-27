@@ -1,3 +1,4 @@
+import binascii
 from io import BytesIO
 from .serializers import *
 from pycoin.block import Block
@@ -108,6 +109,24 @@ class ChainBasicClient (object):
 		:param message: The message to be sent
 		"""
 		pass
+
+
+	def send_tx (self, message):
+		bin_data = BytesIO()
+		message_header = MessageHeader(self.chain)
+		message_header_serial = MessageHeaderSerializer()
+
+		bin_message = binascii.unhexlify (message)
+		payload_checksum = MessageHeaderSerializer.calc_checksum(bin_message)
+		message_header.checksum = payload_checksum
+		message_header.length = len(bin_message)
+		message_header.command = 'tx'
+
+		bin_data.write(message_header_serial.serialize(message_header))
+		bin_data.write(bin_message)
+		self.socket.sendall(bin_data.getvalue())
+		self.handle_send_message(message_header, message)
+
 
 	def send_message(self, message):
 		"""This method will serialize the message using the

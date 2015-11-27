@@ -8,6 +8,7 @@ from threading import Thread, Lock, Timer
 from . import clients
 from . import networks
 from . import serializers
+from . import log
 
 
 class NodeClient (clients.ChainClient):
@@ -30,7 +31,6 @@ class NodeClient (clients.ChainClient):
 	def handle_getdata (self, message_header, message):
 		self.node.handle_getdata (self, message_header, message)
 
-
 # Todo remove transaction from mempool after confirmation
 class Node:
 	def __init__ (self, chain, dbfile, lastblockhash = None, lastblockheight = None, logger=None, maxpeers=15):
@@ -38,7 +38,7 @@ class Node:
 			raise networks.UnsupportedChainException ()
 
 		if logger == None:
-			self.logger = lambda x: x
+			self.logger = log.DummyLogger ()
 		else:
 			self.logger = logger
 
@@ -81,6 +81,7 @@ class Node:
 			except Exception as e:
 				pass
 
+		#print (self.peers)
 		if len (self.peers) == 0:
 			raise Exception ()
 
@@ -165,15 +166,14 @@ class Node:
 				for txid in self.db['mempool']:
 					sinv = clients.Inventory ()
 					sinv.inv_hash = int (txid, 16)
-
 					inv.inventory.append (sinv)
 
 			#self.logger.debug ('Announcing %d transactions', len (inv.inventory))
 			for cl in self.clients:
 				try:
 					cl.send_message (inv)
-				except:
-					pass
+				except Exception as e:
+					print (e)
 
 		self.mempooltimer.cancel ()
 		self.mempooltimer = Timer (2.0, self.announceTransactions)
@@ -184,19 +184,16 @@ class Node:
 		pass
 
 	def handle_getdata (self, client, message_header, message):
-		#print ('getdata')
 		for inv in message.inventory:
 			txhash = str (hex (inv.inv_hash))[2:]
-			#print ('asking for', txhash)
 			if txhash in self.db['mempool']:
-				#print ('sending mempool transaction ', txhash)
-				tx = self.db['mempool'][txhash].tx_as_hex ()
+				tx = self.db['mempool'][txhash]
+				txhex = tx.as_hex ()
 
 				try:
-					client.send_message (tx)
+					client.send_tx (txhex)
 				except Exception as e:
-					print (e)
-		#print (self.db['mempool'])
+					pass
 
 	def handle_block (self, message_header, message):
 		if message.previous_block_id () == self.db['lastblockhash']:
@@ -226,7 +223,6 @@ class Node:
 		else:
 			hash = message.previous_block_id ()
 			if not hash in self.db:
-				#print ('prev', hash)
 				self.postblocks [hash] = message
 
 
@@ -246,23 +242,14 @@ class Node:
 			return None
 
 	def broadcastTransaction (self, transaction):
-		print (transaction)
+		#print (transaction)
 		t = Tx.tx_from_hex (transaction)
-
-		deserializer = serializers.TxSerializer ()
-		tx = deserializer.deserialize (BytesIO (bytearray.fromhex(transaction)))
 		h = t.id ()
-		print ('BROADCAST:', str (tx.calculate_hash ())[2:-1], h)
-
-		#try:
-		#	t = Tx.tx_from_hex (transaction)
-		#	print ('OMG',t.id ())
-		#except Exception as e:
-		#	print (e)
+		#print ('BROADCAST:', t.id ())
 
 		if not h in self.db['mempool']:
 			mp = self.db['mempool']
-			mp[h] = tx
+			mp[h] = t
 			self.db['mempool'] = mp
 			self.db.sync ()
 
