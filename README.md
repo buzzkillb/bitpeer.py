@@ -2,6 +2,8 @@
 
 A pure Python3 bitcoin protocol implementation with pycoin.
 
+You can support this project and other bitcoin-related projects by donating BTC to: **129k6fDTd66j1LMY5RAdFSQozeBe58nfxE**
+
 
 ## Features
 
@@ -34,7 +36,3 @@ Or if pip is an alias of pip3:
 
 Some samples are available in samples directory.
 
-
-## Donate
-
-You can help the project by donating BTC to: **129k6fDTd66j1LMY5RAdFSQozeBe58nfxE**
