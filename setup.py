@@ -4,7 +4,7 @@ import bitpeer
 
 setup(
     name='bitpeer.py',
-    version='0.4',
+    version='0.4.2',
     url='https://github.com/dakk/bitpeer.py',
     license='BSD License',
     author='Davide Gessa, Christian S. Perone',
@@ -12,7 +12,7 @@ setup(
     description='A pure Python3 bitcoin protocol implementation.',
     long_description='A pure Python3 bitcoin protocol implementation.',
     install_requires=['ecdsa>=0.10', 'pycoin'],
-    packages=['bitpeer'],
+    packages=['bitpeer', 'bitpeer.storage'],
     keywords='bitcoin, protocol, blockchain, litecoin, testnet, bitpeer, peer',
     platforms='Any',
     zip_safe=True,

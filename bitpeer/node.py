@@ -9,6 +9,7 @@ from . import clients
 from . import networks
 from . import serializers
 from . import log
+from . import storage
 
 
 class NodeClient (clients.ChainClient):
@@ -33,7 +34,7 @@ class NodeClient (clients.ChainClient):
 
 # Todo remove transaction from mempool after confirmation
 class Node:
-	def __init__ (self, chain, dbfile, lastblockhash = None, lastblockheight = None, logger=None, maxpeers=15):
+	def __init__ (self, chain, storagedb, lastblockhash = None, lastblockheight = None, logger=None, maxpeers=15):
 		if not networks.isSupported (chain):
 			raise networks.UnsupportedChainException ()
 
@@ -42,10 +43,13 @@ class Node:
 		else:
 			self.logger = logger
 
+		if type (storagedb) == str:
+			self.db = storage.shelve.ShelveStorage (storagedb)
+		else:
+			self.db = storagedb
+			
 		self.maxpeers = maxpeers
 		self.chain = chain
-		self.dbfile = dbfile
-		self.db = shelve.open (dbfile)
 		self.sockets = []
 		self.clients = []
 		self.threads = []
