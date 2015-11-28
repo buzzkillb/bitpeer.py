@@ -14,4 +14,7 @@ class ShelveStorage (storage.Storage):
 	def __contains__(self, key):
 		return key in self.shelve
 
+	def sync (self):
+		return self.shelve.sync ()
+
     

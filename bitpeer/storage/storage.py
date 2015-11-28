@@ -11,4 +11,8 @@ class Storage:
 	def __contains__(self, key):
 		raise Exception ('This is an interface')
 
+	def sync (self):
+		raise Exception ('This is an interface')
+		
+
     

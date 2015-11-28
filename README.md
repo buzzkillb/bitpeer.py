@@ -14,7 +14,9 @@ You can support this project and other bitcoin-related projects by donating BTC 
   - DNS seed bootstrap
   - Multiple connections
   - Mempool and transaction broadcast
-  - Automatic syncronization with fs storage capabilities
+  - Automatic syncronization with storage capabilities (the storage abstraction allows different storage types)
+  - Storage types: shelve and memory
+  - Peer reconnection handling
 
 
 

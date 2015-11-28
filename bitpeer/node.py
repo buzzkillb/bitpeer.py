@@ -11,11 +11,32 @@ from . import serializers
 from . import log
 from . import storage
 
+MAX_CLIENT_FAILURES = 5
 
 class NodeClient (clients.ChainClient):
-	def __init__ (self, socket, chain, node):
+	def __init__ (self, socket, chain, node, host):
 		self.node = node
+		self.host = host
+		self.failures = 0
 		super (NodeClient, self).__init__ (socket, chain)
+
+
+	def reconnect (self):
+		self.failures += 1
+
+		if self.failures < MAX_CLIENT_FAILURES:
+			try:
+				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.socket.settimeout (3.0)
+				self.socket.connect (peer)
+				self.socket.settimeout (None)
+				self.handshake ()
+			except:
+				return False
+			return True
+		else:
+			return False
+		
 
 	def handle_block(self, message_header, message):
 		self.node.handle_block (message_header, message)
@@ -32,7 +53,7 @@ class NodeClient (clients.ChainClient):
 	def handle_getdata (self, message_header, message):
 		self.node.handle_getdata (self, message_header, message)
 
-# Todo remove transaction from mempool after confirmation
+
 class Node:
 	def __init__ (self, chain, storagedb, lastblockhash = None, lastblockheight = None, logger=None, maxpeers=15):
 		if not networks.isSupported (chain):
@@ -90,18 +111,20 @@ class Node:
 			raise Exception ()
 
 		random.shuffle (self.peers)
-		self.peers = self.peers [0:self.maxpeers]
-		self.logger.debug ('Bootstrap done')
+		#self.peers = self.peers [0:self.maxpeers]
+		self.logger.debug ('Bootstrap done with %s peers', len (self.peers))
 
 
 	def connect (self):
 		for peer in self.peers:
+			if len (self.clients) == self.maxpeers:
+				break
 			try:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				sock.settimeout (3.0)
 				sock.connect (peer)
 				sock.settimeout (None)
-				pcc = NodeClient (sock, self.chain, self)
+				pcc = NodeClient (sock, self.chain, self, peer)
 				pcc.handshake ()
 				self.sockets.append (sock)
 				self.clients.append (pcc)
@@ -111,32 +134,42 @@ class Node:
 		if len (self.clients) == 0:
 			raise Exception ()
 
-		self.synctimer = Timer (0.0, self.sync)
+		self.logger.debug ('Connected to %s peers', len (self.clients))
+		self.synctimer = Timer (5.0, self.sync)
 		self.synctimer.start ()
 
 
 	def sync (self):
 		if len (self.clients) == 0:
 			return
+		self.logger.debug ('Sync request')
 
-		r = random.randint(0, len (self.clients) - 1)
-		p = self.clients [r]
-		try:
-			getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
-			p.send_message (getblock)
-		except:
-			self.clients.remove (p)
+		for p in self.clients:
+			#r = random.randint(0, len (self.clients) - 1)
+			#p = self.clients [r]
+			try:
+				getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
+				p.send_message (getblock)
+			except Exception as e:
+				if not p.reconnect ():
+					self.logger.debug ('Removed unreachable peer %s (%s)', str (p.host), e)
+					self.clients.remove (p)
+					self.logger.debug ('Available peers: %d', len (self.clients))
+				
 
 		self.synctimer.cancel ()
-		self.synctimer = Timer (0.1, self.sync)
+		self.synctimer = Timer (5.0, self.sync)
 		self.synctimer.start ()
 
 
 	def innerLoop (self, cl):
 		try:
 			cl.loop ()
-		except:
-			self.clients.remove (cl)
+		except Exception as e:
+			if not cl.reconnect ():
+				self.logger.debug ('Removed unreachable peer %s (%s)', str (cl.host), e)
+				self.clients.remove (cl)
+				self.logger.debug ('Available peers: %d', len (self.clients))
 
 	def loop (self):
 		self.mempooltimer = Timer (1.0, self.announceTransactions)
@@ -172,7 +205,7 @@ class Node:
 					sinv.inv_hash = int (txid, 16)
 					inv.inventory.append (sinv)
 
-			#self.logger.debug ('Announcing %d transactions', len (inv.inventory))
+			self.logger.debug ('Announcing %d transactions', len (inv.inventory))
 			for cl in self.clients:
 				try:
 					cl.send_message (inv)
@@ -180,7 +213,7 @@ class Node:
 					print (e)
 
 		self.mempooltimer.cancel ()
-		self.mempooltimer = Timer (2.0, self.announceTransactions)
+		self.mempooltimer = Timer (30.0, self.announceTransactions)
 		self.mempooltimer.start ()
 
 
@@ -212,7 +245,7 @@ class Node:
 			self.db[hash] = b
 			self.db['lastblockheight'] += 1
 			self.db['lastblockhash'] = hash
-			self.logger.debug ('%d %s', self.db['lastblockheight'], self.db['lastblockhash'])
+			self.logger.debug ('New block: %d %s', self.db['lastblockheight'], self.db['lastblockhash'])
 
 			if hash in self.postblocks:
 				self.handle_block (None, self.prevblocks[hash])
@@ -222,7 +255,7 @@ class Node:
 			self.db.sync ()
 
 			self.synctimer.cancel ()
-			self.synctimer = Timer (0.1, self.sync)
+			self.synctimer = Timer (0.5, self.sync)
 			self.synctimer.start ()
 		else:
 			hash = message.previous_block_id ()
@@ -246,10 +279,8 @@ class Node:
 			return None
 
 	def broadcastTransaction (self, transaction):
-		#print (transaction)
 		t = Tx.tx_from_hex (transaction)
 		h = t.id ()
-		#print ('BROADCAST:', t.id ())
 
 		if not h in self.db['mempool']:
 			mp = self.db['mempool']
