@@ -1,6 +1,6 @@
-# bitpeer.py - Bitcoin protocol
+# bitpeer.py - Bitcoin protocol and node
 
-A pure Python3 bitcoin protocol implementation with pycoin.
+A pure Python3 bitcoin protocol and node implementation with pycoin.
 
 You can support this project and other bitcoin-related projects by donating BTC to: **129k6fDTd66j1LMY5RAdFSQozeBe58nfxE**
 
