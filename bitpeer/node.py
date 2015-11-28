@@ -142,7 +142,7 @@ class Node:
 	def sync (self):
 		if len (self.clients) == 0:
 			return
-		self.logger.debug ('Sync request')
+		#self.logger.debug ('Sync request')
 
 		for p in self.clients:
 			#r = random.randint(0, len (self.clients) - 1)

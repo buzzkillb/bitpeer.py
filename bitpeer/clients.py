@@ -162,7 +162,7 @@ class ChainBasicClient (object):
 			data = self.socket.recv(1024*8)
 
 			if len(data) <= 0:
-				raise NodeDisconnectException("Node disconnected.")
+				raise NodeDisconnectException("Node disconnected")
 
 			self.buffer.write(data)
 			message_header, message = self.buffer.receive_message()
