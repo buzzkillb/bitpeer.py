@@ -4,7 +4,7 @@ import bitpeer
 
 setup(
     name='bitpeer.py',
-    version='0.4.6',
+    version='0.4.7',
     url='https://github.com/dakk/bitpeer.py',
     license='BSD License',
     author='Davide Gessa, Christian S. Perone',
