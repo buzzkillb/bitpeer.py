@@ -28,7 +28,7 @@ class NodeClient (clients.ChainClient):
 			try:
 				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				self.socket.settimeout (3.0)
-				self.socket.connect (peer)
+				self.socket.connect (self.host)
 				self.socket.settimeout (None)
 				self.handshake ()
 			except:
@@ -36,7 +36,7 @@ class NodeClient (clients.ChainClient):
 			return True
 		else:
 			return False
-		
+
 
 	def handle_block(self, message_header, message):
 		self.node.handle_block (message_header, message)
@@ -68,17 +68,19 @@ class Node:
 			self.db = storage.shelve.ShelveStorage (storagedb)
 		else:
 			self.db = storagedb
-			
+
 		self.maxpeers = maxpeers
+		self.minpeers = 4
 		self.chain = chain
-		self.sockets = []
 		self.clients = []
 		self.threads = []
 		self.peers = []
 		self.blockFilter = lambda b: b
 		self.synctimer = None
 		self.mempooltimer = None
+		self.boottimer = None
 		self.postblocks = {}
+
 
 		# Create mempool
 		#if not 'mempool' in self.db:
@@ -94,9 +96,12 @@ class Node:
 			self.db ['lastblockheight'] = 0
 			self.db ['lastblockhash'] = networks.GENESIS[chain]
 
+		self.logger.debug ('Starting sync from block %d %s', self.db['lastblockheight'], self.db['lastblockhash'])
+
 
 	# Contact the seed nodes for retrieving a peer list, also load a file peer list
 	def bootstrap (self):
+		self.peers = []
 		for seed in networks.SEEDS [self.chain]:
 			try:
 				(hostname, aliaslist, ipaddrlist) = socket.gethostbyname_ex (seed)
@@ -114,11 +119,20 @@ class Node:
 		#self.peers = self.peers [0:self.maxpeers]
 		self.logger.debug ('Bootstrap done with %s peers', len (self.peers))
 
+	def isConnected (self, peer):
+		for x in self.clients:
+			if x.host == peer:
+				return True
+		return False
 
 	def connect (self):
 		for peer in self.peers:
+			if self.isConnected (peer):
+				return
+
 			if len (self.clients) == self.maxpeers:
 				break
+
 			try:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				sock.settimeout (3.0)
@@ -126,7 +140,6 @@ class Node:
 				sock.settimeout (None)
 				pcc = NodeClient (sock, self.chain, self, peer)
 				pcc.handshake ()
-				self.sockets.append (sock)
 				self.clients.append (pcc)
 			except:
 				pass
@@ -139,10 +152,27 @@ class Node:
 		self.synctimer.start ()
 
 
+	def reboot (self):
+		self.logger.debug ('Bootstrapping clients...')
+		self.boottimer.cancel ()
+		self.bootstrap ()
+		self.connect ()
+
 	def sync (self):
 		if len (self.clients) == 0:
+			self.logger.debug ('No clients available, bootstrapping...')
+			self.reboot ()
 			return
-		#self.logger.debug ('Sync request')
+
+		if len (self.clients) < self.minpeers:
+			self.logger.debug ('Available clients are less than minpeers, bootstrapping...')
+
+			if self.boottimer != None:
+				self.boottimer.cancel ()
+
+			self.boottimer = Timer (5.0, self.reboot)
+			self.boottimer.start ()
+
 
 		for p in self.clients:
 			#r = random.randint(0, len (self.clients) - 1)
@@ -151,11 +181,12 @@ class Node:
 				getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
 				p.send_message (getblock)
 			except Exception as e:
+				#self.logger.error ('Node fail.')
 				if not p.reconnect ():
 					self.logger.debug ('Removed unreachable peer %s (%s)', str (p.host), e)
 					self.clients.remove (p)
 					self.logger.debug ('Available peers: %d', len (self.clients))
-				
+
 
 		self.synctimer.cancel ()
 		self.synctimer = Timer (5.0, self.sync)
@@ -166,6 +197,7 @@ class Node:
 		try:
 			cl.loop ()
 		except Exception as e:
+			#self.logger.error ('Node loop failure.')
 			if not cl.reconnect ():
 				self.logger.debug ('Removed unreachable peer %s (%s)', str (cl.host), e)
 				self.clients.remove (cl)
