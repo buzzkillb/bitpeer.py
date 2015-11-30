@@ -237,12 +237,12 @@ class Node:
 					sinv.inv_hash = int (txid, 16)
 					inv.inventory.append (sinv)
 
-			self.logger.debug ('Announcing %d transactions', len (inv.inventory))
+			#self.logger.debug ('Announcing %d transactions', len (inv.inventory))
 			for cl in self.clients:
 				try:
 					cl.send_message (inv)
 				except Exception as e:
-					print (e)
+					pass #logger.debug ('Transaction announce failure: %s', str (e))
 
 		self.mempooltimer.cancel ()
 		self.mempooltimer = Timer (30.0, self.announceTransactions)
@@ -262,14 +262,14 @@ class Node:
 				try:
 					client.send_tx (txhex)
 				except Exception as e:
-					pass
+					pass #logger.debug ('Send transaction failure: %s', str (e))
 
 	def handle_block (self, message_header, message):
 		if message.previous_block_id () == self.db['lastblockhash']:
 			try:
 				b = self.blockFilter (message)
 			except Exception as e:
-				print (e)
+				logger.debug ('BlockFilter failure: %s', str (e)) 
 
 			# Serialize block
 			hash = message.id ()
