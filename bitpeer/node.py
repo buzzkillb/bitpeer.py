@@ -271,27 +271,33 @@ class Node:
 			try:
 				b = self.blockFilter (message)
 			except Exception as e:
-				#print ('out')
+				#print ('fout', e)
 				self.newblocklock.release ()
 				logger.debug ('BlockFilter failure: %s', str (e)) 
 				return
 
 			# Serialize block
-			hash = message.id ()
-			self.db[str (int (self.db['lastblockheight']) + 1)] = hash
-			self.db[hash] = b
-			self.db['lastblockheight'] += 1
-			self.db['lastblockhash'] = hash
-			self.logger.debug ('New block: %d %s', self.db['lastblockheight'], self.db['lastblockhash'])
+			try:
+				hash = message.id ()
+				self.db[str (int (self.db['lastblockheight']) + 1)] = hash
+				self.db[hash] = b
+				self.db['lastblockheight'] += 1
+				self.db['lastblockhash'] = hash
+				self.logger.debug ('New block: %d %s', self.db['lastblockheight'], self.db['lastblockhash'])
 
-			if hash in self.postblocks:
-				self.newblocklock.release ()
-				self.handle_block (None, self.prevblocks[hash])
-				#self.logger.debug ('PREVBLOCK found')
-				self.neblocklock.acquire ()
-				del self.postblocks[hash]
+				if hash in self.postblocks:
+					self.newblocklock.release ()
+					self.handle_block (None, self.postblocks[hash])
+					self.logger.debug ('PREVBLOCK found')
+					self.neblocklock.acquire ()
+					del self.postblocks[hash]
 
-			self.db.sync ()
+				self.db.sync ()
+			except:
+				pass
+
+			#print ('out')
+			self.newblocklock.release ()
 
 			self.synctimer.cancel ()
 			self.synctimer = Timer (0.5, self.sync)
@@ -300,9 +306,8 @@ class Node:
 			hash = message.previous_block_id ()
 			if not hash in self.db:
 				self.postblocks [hash] = message
-
-		#print ('out')
-		self.newblocklock.release ()
+			#print ('oout')
+			self.newblocklock.release ()
 
 
 	def getLastBlockHeight (self):
@@ -321,7 +326,7 @@ class Node:
 			return None
 
 	def broadcastTransaction (self, transaction):
-		t = Tx.tx_from_hex (transaction)
+		t = Tx.from_hex (transaction)
 		h = t.id ()
 
 		if not h in self.db['mempool']:
