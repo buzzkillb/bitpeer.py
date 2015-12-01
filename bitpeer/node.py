@@ -237,12 +237,13 @@ class Node:
 					sinv.inv_hash = int (txid, 16)
 					inv.inventory.append (sinv)
 
-			#self.logger.debug ('Announcing %d transactions', len (inv.inventory))
+			self.logger.debug ('Announcing %d transactions', len (inv.inventory))
 			for cl in self.clients:
 				try:
 					cl.send_message (inv)
 				except Exception as e:
-					pass #logger.debug ('Transaction announce failure: %s', str (e))
+					self.logger.debug ('Transaction announce failure: %s', str (e))
+					pass
 
 		self.mempooltimer.cancel ()
 		self.mempooltimer = Timer (30.0, self.announceTransactions)
@@ -255,10 +256,11 @@ class Node:
 	def handle_getdata (self, client, message_header, message):
 		for inv in message.inventory:
 			txhash = str (hex (inv.inv_hash))[2:]
+			#print (txhash)
 			if txhash in self.db['mempool']:
 				tx = self.db['mempool'][txhash]
 				txhex = tx.as_hex ()
-
+				#print (txhex)
 				try:
 					client.send_tx (txhex)
 				except Exception as e:
@@ -288,7 +290,7 @@ class Node:
 				if hash in self.postblocks:
 					self.newblocklock.release ()
 					self.handle_block (None, self.postblocks[hash])
-					self.logger.debug ('PREVBLOCK found')
+					#self.logger.debug ('PREVBLOCK found')
 					self.neblocklock.acquire ()
 					del self.postblocks[hash]
 
