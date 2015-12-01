@@ -266,7 +266,7 @@ class Node:
 
 	def handle_block (self, message_header, message):
 		self.newblocklock.acquire ()
-		if message.previous_block_id () == self.db['lastblockhash']:
+		if message.previous_block_id () == self.db['lastblockhash'] and not (message.id () in self.db):
 			try:
 				b = self.blockFilter (message)
 			except Exception as e:
