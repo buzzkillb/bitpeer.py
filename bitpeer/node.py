@@ -80,7 +80,7 @@ class Node:
 		self.mempooltimer = None
 		self.boottimer = None
 		self.postblocks = {}
-
+		self.newblocklock = Lock ()
 
 		# Create mempool
 		#if not 'mempool' in self.db:
@@ -265,11 +265,14 @@ class Node:
 					pass #logger.debug ('Send transaction failure: %s', str (e))
 
 	def handle_block (self, message_header, message):
+		self.newblocklock.acquire ()
 		if message.previous_block_id () == self.db['lastblockhash']:
 			try:
 				b = self.blockFilter (message)
 			except Exception as e:
+				self.newblocklock.release ()
 				logger.debug ('BlockFilter failure: %s', str (e)) 
+				return
 
 			# Serialize block
 			hash = message.id ()
@@ -293,6 +296,8 @@ class Node:
 			hash = message.previous_block_id ()
 			if not hash in self.db:
 				self.postblocks [hash] = message
+
+		self.newblocklock.release ()
 
 
 	def getLastBlockHeight (self):
