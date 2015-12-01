@@ -266,10 +266,12 @@ class Node:
 
 	def handle_block (self, message_header, message):
 		self.newblocklock.acquire ()
-		if message.previous_block_id () == self.db['lastblockhash'] and not (message.id () in self.db):
+		#print ('in')
+		if message.previous_block_id () == self.db['lastblockhash']:
 			try:
 				b = self.blockFilter (message)
 			except Exception as e:
+				#print ('out')
 				self.newblocklock.release ()
 				logger.debug ('BlockFilter failure: %s', str (e)) 
 				return
@@ -283,8 +285,10 @@ class Node:
 			self.logger.debug ('New block: %d %s', self.db['lastblockheight'], self.db['lastblockhash'])
 
 			if hash in self.postblocks:
+				self.newblocklock.release ()
 				self.handle_block (None, self.prevblocks[hash])
 				#self.logger.debug ('PREVBLOCK found')
+				self.neblocklock.acquire ()
 				del self.postblocks[hash]
 
 			self.db.sync ()
@@ -297,6 +301,7 @@ class Node:
 			if not hash in self.db:
 				self.postblocks [hash] = message
 
+		#print ('out')
 		self.newblocklock.release ()
 
 
