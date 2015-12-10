@@ -53,6 +53,9 @@ class NodeClient (clients.ChainClient):
 	def handle_getdata (self, message_header, message):
 		self.node.handle_getdata (self, message_header, message)
 
+	#def handle_version (self, message_header, message):
+	#	print (message.start_height)
+
 
 class Node:
 	def __init__ (self, chain, storagedb, lastblockhash = None, lastblockheight = None, logger=None, maxpeers=15):
@@ -178,6 +181,7 @@ class Node:
 			#r = random.randint(0, len (self.clients) - 1)
 			#p = self.clients [r]
 			try:
+				#print (self.db['lastblockhash'])
 				getblock = clients.GetBlocks ([int (self.db['lastblockhash'], 16)])
 				p.send_message (getblock)
 			except Exception as e:
@@ -237,12 +241,12 @@ class Node:
 					sinv.inv_hash = int (txid, 16)
 					inv.inventory.append (sinv)
 
-			self.logger.debug ('Announcing %d transactions', len (inv.inventory))
+			#self.logger.debug ('Announcing %d transactions', len (inv.inventory))
 			for cl in self.clients:
 				try:
 					cl.send_message (inv)
 				except Exception as e:
-					self.logger.debug ('Transaction announce failure: %s', str (e))
+					#self.logger.debug ('Transaction announce failure: %s', str (e))
 					pass
 
 		self.mempooltimer.cancel ()
