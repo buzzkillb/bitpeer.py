@@ -1,0 +1,6 @@
+{
+  "name": "Bitpeer.py",
+  "tagline": "A pure Python3 Bitcoin protocol and node implementation",
+  "body": "## Features\r\n\r\n- Bitcoin protocol data serialization / deserialization\r\n- Customizable clients for single node connections\r\n- Network support for different coins (bitcoin, namecoin, litecoin)\r\n- Customizable node:\r\n  - DNS seed bootstrap\r\n  - Multiple connections\r\n  - Mempool and transaction broadcast\r\n  - Automatic syncronization with storage capabilities (the storage abstraction allows different storage types)\r\n  - Storage types: shelve and memory\r\n  - Peer reconnection handling\r\n\r\n\r\n\r\n## Getting started\r\n\r\nTo install bitpeer.py, use `pip` (recommended method) or `easy_install`::\r\n\r\n```bash\r\n\tpip3 install bitpeer.py\r\n```\r\n\r\nOr if pip is an alias of pip3:\r\n\r\n```bash\r\n\tpip install bitpeer.py\r\n```\t\r\n\r\n## Examples\r\n\r\nSome samples are available in samples directory.\r\n\r\n\r\n\r\n## Support\r\n\r\nYou can support this project and other bitcoin-related projects by donating BTC to: **129k6fDTd66j1LMY5RAdFSQozeBe58nfxE**\r\n\r\n\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
