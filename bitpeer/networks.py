@@ -1,4 +1,4 @@
-SUPPORTED_CHAINS = [ "BTC", "XTN", "NMC", "LTC", "XLT", "DOGE", "XDN" ]
+SUPPORTED_CHAINS = [ "BTC", "XTN", "NMC", "LTC", "XLT", "DOGE", "XDN", "D" ]
 
 
 # Network magic values
@@ -9,7 +9,8 @@ MAGIC_VALUES = {
 	"LTC": 0xFBC0B6DB,
 	"XLT": 0xDCB7C1FC,
 	"DOGE": 0xC0C0C0C0,
-	"XDN": 0xDCB7C1FC
+	"XDN": 0xDCB7C1FC,
+	"D": 0xFAF2EFB4
 }
 
 # Genesis blocks
@@ -20,7 +21,8 @@ GENESIS = {
 	"LTC": 0x12a765e31ffd4059bada1e25190f6e98c99d9714d334efa41a195a7e7e04bfe2,
 	"XLT": 0xf5ae71e26c74beacc88382716aced69cddf3dffff24f384e1808905e0188f68f,
 	"DOGE": 0x1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691,
-	"XDN": 0xbb0a78264637406b6360aad926284d544d7049f45189db5664f3c4d07350559e
+	"XDN": 0xbb0a78264637406b6360aad926284d544d7049f45189db5664f3c4d07350559e,
+	"D": 0x00000d5dbbda01621cfc16bbc1f9bf3264d641a5dbf0de89fd0182c2c4828fcd
 }
 
 # Default ports
@@ -31,7 +33,8 @@ PORTS = {
 	"LTC": 9333,
 	"XLT": 19333,
 	"DOGE": 22556,
-	"XDN": 44556
+	"XDN": 44556,
+	"D": 33369
 }
 
 # Almost available peers
@@ -40,7 +43,8 @@ PEERS = {
 	"XTN": [],
 	"NMC": [],
 	"LTC": [],
-	"XLT": [("51.254.215.160", 19333)]
+	"XLT": [("51.254.215.160", 19333)],
+	"D": []
 }
 
 
@@ -52,7 +56,8 @@ SEEDS = {
 	"XLT": [ "testnet-seed.litecointools.com", "testnet-seed.ltc.xurious.com", "dnsseed.wemine-testnet.com" ],
 	"NMC": [ "namecoindnsseed.digi-masters.com", "namecoindnsseed.digi-masters.uk", "seed.namecoin.domob.eu", "nmc.seed.quisquis.de", "dnsseed.namecoin.webbtc.com" ],
 	"DOGE": [ "seed.dogecoin.com", "seed.multidoge.org", "seed2.multidoge.org", "seed.doger.dogecoin.com" ],
-	"XDN": [ "testseed.jrn.me.uk" ]
+	"XDN": [ "testseed.jrn.me.uk" ],
+	"D": [ "dnsseed.denarius.pro" ]
 }
 
 
